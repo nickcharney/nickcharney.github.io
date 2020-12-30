@@ -427,7 +427,7 @@ function randomMap(numSpawns) {
         }
         spawnpoints.push(s);
     }
-}*/
+}
 
 // Random grid coordinate
 function randomTile() {
