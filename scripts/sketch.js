@@ -112,7 +112,21 @@ function buy(t) {
     }
 }
 
+// Calculate and display current and average FPS
+function calcFPS() {
+    var fps = frameRate();
+    avgFPS += (fps - avgFPS) / ++numFPS;
 
+    // Draw black rect under text
+    noStroke();
+    fill(0);
+    rect(0, height - 40, 70, 40);
+
+    // Update FPS meter
+    fill(255);
+    var fpsText = 'FPS: ' + fps.toFixed(2) + '\nAvg: ' + avgFPS.toFixed(2);
+    text(fpsText, 5, height - 25);
+}
 
 // Check if all conditions for placing a tower are true
 function canPlace(col, row) {
@@ -134,7 +148,8 @@ function clearInfo() {
     document.getElementById('info-div').style.display = 'none';
 }
 
-
+// TODO implement
+function customWave() {}
 
 // Check if all conditions for showing a range are true
 function doRange() {
@@ -160,7 +175,33 @@ function empty(col, row) {
     return true;
 }
 
-
+// Return map string
+function exportMap() {
+    // Convert spawnpoints into a JSON-friendly format
+    var spawns = [];
+    for (var i = 0; i < spawnpoints.length; i++) {
+        var s = spawnpoints[i];
+        spawns.push([s.x, s.y]);
+    }
+    return LZString.compressToBase64(JSON.stringify({
+        // Grids
+        display: display,
+        displayDir: displayDir,
+        grid: grid,
+        metadata: metadata,
+        paths: paths,
+        // Important tiles
+        exit: [exit.x, exit.y],
+        spawnpoints: spawns,
+        // Colors
+        bg: bg,
+        border: border,
+        borderAlpha, borderAlpha,
+        // Misc
+        cols: cols,
+        rows: rows
+    }));
+}
 
 // Get an empty tile
 function getEmpty() {
@@ -404,7 +445,40 @@ function placeable(col, row) {
     return true;
 }
 
+// Generate random map
+function randomMap(numSpawns) {
+    // Generate empty tiles and walls
+    grid = [];
+    for (var x = 0; x < cols; x++) {
+        grid[x] = [];
+        for (var y = 0; y < rows; y++) {
+            grid[x][y] = random() < wallCover ? 1 : 0;
+        }
+    }
+    walkMap = getWalkMap();
 
+    // Generate exit and remove walls that are adjacent
+    exit = getEmpty();
+    var adj = neighbors(walkMap, exit.x, exit.y, false);
+    for (var i = 0; i < adj.length; i++) {
+        var n = stv(adj[i]);
+        grid[n.x][n.y] = 0;
+    }
+
+    // Generate enemy spawnpoints and ensure exit is possible
+    spawnpoints = [];
+    visitMap = getVisitMap(walkMap);
+    for (var i = 0; i < numSpawns; i++) {
+        var s;
+        // Try to place spawnpoint
+        for (var j = 0; j < 100; j++) {
+            s = getEmpty();
+            while (!visitMap[vts(s)]) s = getEmpty();
+            if (s.dist(exit) >= minDist) break;
+        }
+        spawnpoints.push(s);
+    }
+}
 
 // Random grid coordinate
 function randomTile() {
@@ -885,7 +959,30 @@ function draw() {
         }
     }
 
+    // Update FPS meter
+    if (showFPS) calcFPS();
 
+    // Show if god mode active
+    if (godMode) {
+        // Draw black rect under text
+        noStroke();
+        fill(0);
+        rect(0, 0, 102, 22);
+
+        fill(255);
+        text('God Mode Active', 5, 15);
+    }
+
+    // Show if towers are disabled
+    if (stopFiring) {
+        // Draw black rect under text
+        noStroke();
+        fill(0);
+        rect(width - 60, 0, 60, 22);
+        
+        fill(255);
+        text('Firing off', width - 55, 15);
+    }
 
     removeTempSpawns();
 
@@ -932,6 +1029,111 @@ function keyPressed() {
             // Esc
             toPlace = false;
             clearInfo();
+            break;
+        case 32:
+            // Space
+            pause();
+            break;
+        case 49:
+            // 1
+            setPlace('gun');
+            break;
+        case 50:
+            // 2
+            setPlace('laser');
+            break;
+        case 51:
+            // 3
+            setPlace('slow');
+            break;
+        case 52:
+            // 4
+            setPlace('sniper');
+            break;
+        case 53:
+            // 5
+            setPlace('rocket');
+            break;
+        case 54:
+            // 6
+            setPlace('bomb');
+            break;
+        case 55:
+            // 7
+            setPlace('tesla');
+            break;
+        case 70:
+            // F
+            showFPS = !showFPS;
+            break;
+        case 71:
+            // G
+            godMode = !godMode;
+            break;
+        case 72:
+            // H
+            healthBar = !healthBar;
+            break;
+        case 77:
+            // M
+            importMap(prompt('Input map string:'));
+            break;
+        case 80:
+            // P
+            showEffects = !showEffects;
+            if (!showEffects) systems = [];
+            break;
+        case 81:
+            // Q
+            stopFiring = !stopFiring;
+            break;
+        case 82:
+            // R
+            resetGame();
+            break;
+        case 83:
+            // S
+            if (selected) sell(selected);
+            break;
+        case 85:
+            // U
+            if (selected && selected.upgrades.length > 0) {
+                upgrade(selected.upgrades[0]);
+            }
+            break;
+        case 86:
+            // V
+            muteSounds = !muteSounds;
+            break;
+        case 87:
+            // W
+            skipToNext = !skipToNext;
+            break;
+        case 88:
+            // X
+            copyToClipboard(exportMap());
+            break;
+        case 90:
+            // Z
+            ts = zoomDefault;
+            resizeMax();
+            resetGame();
+            break;
+        case 219:
+            // Left bracket
+            if (ts > 16) {
+                ts -= tileZoom;
+                resizeMax();
+                resetGame();
+            }
+            break;
+        case 221:
+            // Right bracket
+            if (ts < 40) {
+                ts += tileZoom;
+                resizeMax();
+                resetGame();
+            }
             break;
     }
 }
