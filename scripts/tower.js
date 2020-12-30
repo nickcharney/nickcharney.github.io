@@ -17,6 +17,7 @@ class Tower {
         // Misc
         this.alive = true;
         this.name = 'tower';
+        this.sound = null;          // sound to play on fire
         this.title = 'Tower';
 
         // Position
@@ -31,7 +32,9 @@ class Tower {
         this.damageMax = 20;
         this.damageMin = 1;
         this.range = 3;
+        this.totalCost = 0;
         this.type = 'physical';     // damage type
+        this.upgrades = [];
     }
 
     // Adjust angle to point towards pixel position
@@ -43,6 +46,9 @@ class Tower {
     attack(e) {
         var damage = round(random(this.damageMin, this.damageMax));
         e.dealDamage(damage, this.type);
+        if (!muteSounds && sounds.hasOwnProperty(this.sound)) {
+            sounds[this.sound].play();
+        }
         this.onHit(e);
     }
 
@@ -94,9 +100,14 @@ class Tower {
         this.alive = false;
     }
 
+    isDead() {
+        return !this.alive;
+    }
+
     // Functionality once entity has been targeted
     onAim(e) {
         if (this.canFire() || this.follow) this.aim(e.pos.x, e.pos.y);
+        if (stopFiring) return;
         if (!this.canFire()) return;
         this.resetCooldown();
         this.attack(e);
@@ -110,19 +121,9 @@ class Tower {
 
     onCreate() {
         this.cd = 0;                // current cooldown left
-        this.totalCost = this.cost;
     }
 
     onHit(e) {}
-
-    onTarget(entities) {
-        entities = this.visible(entities);
-        var t = getTaunting(entities);
-        if (t.length > 0) entities = t;
-        var e = this.target(entities);
-        if (typeof e === 'undefined') return;
-        this.onAim(e);
-    }
 
     resetCooldown() {
         var cooldown = round(random(this.cooldownMin, this.cooldownMax));
@@ -131,23 +132,18 @@ class Tower {
 
     // Sell price
     sellPrice() {
-        return this.totalCost * sellConst;
+        return floor(this.totalCost * sellConst);
     }
 
-    // Target enemy closest to exit
+    // Target correct enemy
     target(entities) {
-        var lowestDist = 10000;
-        var chosen = entities[0];
-        for (var i = 0; i < entities.length; i++) {
-            var e = entities[i];
-            var t = gridPos(e.pos.x, e.pos.y);
-            var dist = dists[t.x][t.y];
-            if (dist < lowestDist) {
-                lowestDist = dist;
-                chosen = e;
-            }
-        }
-        return chosen;
+        entities = this.visible(entities);
+        if (entities.length === 0) return;
+        var t = getTaunting(entities);
+        if (t.length > 0) entities = t;
+        var e = getFirst(entities);
+        if (typeof e === 'undefined') return;
+        this.onAim(e);
     }
 
     update() {
@@ -162,6 +158,7 @@ class Tower {
             var key = keys[i];
             this[key] = template[key];
         }
+        if (template.cost) this.totalCost += template.cost;
     }
 
     // Returns array of visible entities out of passed array
