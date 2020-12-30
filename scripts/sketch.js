@@ -1006,49 +1006,10 @@ function keyPressed() {
             // R
             resetGame();
             break;
-        case 83:
-            // S
-            if (selected) sell(selected);
-            break;
-        case 85:
-            // U
-            if (selected && selected.upgrades.length > 0) {
-                upgrade(selected.upgrades[0]);
-            }
-            break;
-        case 86:
-            // V
-            muteSounds = !muteSounds;
-            break;
+
         case 87:
             // W
             skipToNext = !skipToNext;
-            break;
-        case 88:
-            // X
-            copyToClipboard(exportMap());
-            break;
-        case 90:
-            // Z
-            ts = zoomDefault;
-            resizeMax();
-            resetGame();
-            break;
-        case 219:
-            // Left bracket
-            if (ts > 16) {
-                ts -= tileZoom;
-                resizeMax();
-                resetGame();
-            }
-            break;
-        case 221:
-            // Right bracket
-            if (ts < 40) {
-                ts += tileZoom;
-                resizeMax();
-                resetGame();
-            }
             break;
     }
 }
