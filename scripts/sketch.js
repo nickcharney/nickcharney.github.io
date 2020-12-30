@@ -148,8 +148,7 @@ function clearInfo() {
     document.getElementById('info-div').style.display = 'none';
 }
 
-// TODO implement
-function customWave() {}
+
 
 // Check if all conditions for showing a range are true
 function doRange() {
