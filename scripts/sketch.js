@@ -1002,6 +1002,11 @@ function keyPressed() {
 
 function mousePressed() {
     if (!mouseInMap()) return;
+    if (mouseButton === RIGHT) {
+        toPlace = false;
+            clearInfo();
+            break;
+    }
     var p = gridPos(mouseX, mouseY);
     var t = getTower(p.x, p.y);
     
