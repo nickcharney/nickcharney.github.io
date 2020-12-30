@@ -112,21 +112,7 @@ function buy(t) {
     }
 }
 
-// Calculate and display current and average FPS
-function calcFPS() {
-    var fps = frameRate();
-    avgFPS += (fps - avgFPS) / ++numFPS;
 
-    // Draw black rect under text
-    noStroke();
-    fill(0);
-    rect(0, height - 40, 70, 40);
-
-    // Update FPS meter
-    fill(255);
-    var fpsText = 'FPS: ' + fps.toFixed(2) + '\nAvg: ' + avgFPS.toFixed(2);
-    text(fpsText, 5, height - 25);
-}
 
 // Check if all conditions for placing a tower are true
 function canPlace(col, row) {
