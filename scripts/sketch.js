@@ -1007,8 +1007,10 @@ function mousePressed() {
             clearInfo();
             break;
     }
-    var p = gridPos(mouseX, mouseY);
-    var t = getTower(p.x, p.y);
+    else {
+        var p = gridPos(mouseX, mouseY);
+        var t = getTower(p.x, p.y);
+    }
     
     if (t) {
         // Clicked on tower
