@@ -175,33 +175,7 @@ function empty(col, row) {
     return true;
 }
 
-// Return map string
-function exportMap() {
-    // Convert spawnpoints into a JSON-friendly format
-    var spawns = [];
-    for (var i = 0; i < spawnpoints.length; i++) {
-        var s = spawnpoints[i];
-        spawns.push([s.x, s.y]);
-    }
-    return LZString.compressToBase64(JSON.stringify({
-        // Grids
-        display: display,
-        displayDir: displayDir,
-        grid: grid,
-        metadata: metadata,
-        paths: paths,
-        // Important tiles
-        exit: [exit.x, exit.y],
-        spawnpoints: spawns,
-        // Colors
-        bg: bg,
-        border: border,
-        borderAlpha, borderAlpha,
-        // Misc
-        cols: cols,
-        rows: rows
-    }));
-}
+
 
 // Get an empty tile
 function getEmpty() {
