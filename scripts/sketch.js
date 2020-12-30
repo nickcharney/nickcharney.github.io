@@ -997,42 +997,6 @@ function keyPressed() {
             toPlace = false;
             clearInfo();
             break;
-        case 32:
-            // Space
-            pause();
-            break;
-        case 49:
-            // 1
-            setPlace('gun');
-            break;
-        case 50:
-            // 2
-            setPlace('laser');
-            break;
-        case 51:
-            // 3
-            setPlace('slow');
-            break;
-        case 52:
-            // 4
-            setPlace('sniper');
-            break;
-        case 53:
-            // 5
-            setPlace('rocket');
-            break;
-        case 54:
-            // 6
-            setPlace('bomb');
-            break;
-        case 55:
-            // 7
-            setPlace('tesla');
-            break;
-        case 87:
-            // W
-            skipToNext = !skipToNext;
-            break;
     }
 }
 
