@@ -34,14 +34,15 @@
 
       <div id="sketch-holder"></div>
 
-      <div class="aside-holder">
+      <div id="right-asides">
         <aside id="status">
           <p id="wave"></p>
           <p id="health"></p>
           <p id="cash"></p>
-          <p>
-            <button onclick="pause()">Start</button>
+          <div class="horiz-buttons">
+            <button id="pause" onclick="pause()">Start</button>
             <button onclick="resetGame()">Restart</button>
+          </div>
           </p>
           <p>
             Mode:
@@ -55,7 +56,6 @@
           <p>
             Map:
             <select id="map">
-              <option value="random" selected>Random</option>
               <option value="zigzag">Zigzag</option>
             </select>
           </p>
