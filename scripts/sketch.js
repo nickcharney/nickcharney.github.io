@@ -276,7 +276,19 @@ function isWave(min, max) {
 // Load map from template
 // Always have an exit and spawnpoints if you do not have a premade grid
 // TODO health and money by map
-function loadMap() {
+function loadMap(template) {
+
+    health = 40;
+    cash = 55;
+
+    grid = template.grid;
+    palette = template.palette;
+    var dim = getDimensions(grid);
+    cols = dim.cols;
+    rows = dim.rows;
+    resizeTiles(cols, rows);
+}
+/*function loadMap() {
     var name = document.getElementById('map').value;
 
     health = 40;
@@ -368,7 +380,7 @@ function loadMap() {
     tempSpawns = [];
 
     recalculate();
-}
+}*/
 
 // Load all sounds
 function loadSounds() {
