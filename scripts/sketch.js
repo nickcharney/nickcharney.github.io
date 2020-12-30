@@ -112,21 +112,7 @@ function buy(t) {
     }
 }
 
-// Calculate and display current and average FPS
-function calcFPS() {
-    var fps = frameRate();
-    avgFPS += (fps - avgFPS) / ++numFPS;
 
-    // Draw black rect under text
-    noStroke();
-    fill(0);
-    rect(0, height - 40, 70, 40);
-
-    // Update FPS meter
-    fill(255);
-    var fpsText = 'FPS: ' + fps.toFixed(2) + '\nAvg: ' + avgFPS.toFixed(2);
-    text(fpsText, 5, height - 25);
-}
 
 // Check if all conditions for placing a tower are true
 function canPlace(col, row) {
@@ -148,8 +134,6 @@ function clearInfo() {
     document.getElementById('info-div').style.display = 'none';
 }
 
-// TODO implement
-function customWave() {}
 
 // Check if all conditions for showing a range are true
 function doRange() {
@@ -242,7 +226,6 @@ function isWave(min, max) {
 
 // Load map from template
 // Always have an exit and spawnpoints if you do not have a premade grid
-// TODO health and money by map
 function loadMap() {
     var name = document.getElementById('map').value;
 
@@ -412,7 +395,6 @@ function placeable(col, row) {
     return true;
 }
 
-/*// Generate random map
 function randomMap(numSpawns) {
     // Generate empty tiles and walls
     grid = [];
@@ -1002,6 +984,7 @@ function keyPressed() {
 
 function mousePressed() {
     if (!mouseInMap()) return;
+    //todo: right click to cancel placement
     if (mouseButton === RIGHT) {
         toPlace = false;
             clearInfo();
