@@ -276,17 +276,57 @@ function isWave(min, max) {
 // Load map from template
 // Always have an exit and spawnpoints if you do not have a premade grid
 // TODO health and money by map
-function loadMap(template) {
+// Load map from template, fill in missing sections
+// Always have an exit and spawnpoints if you do not have a premade grid
+function loadMap(name) {
+    var m = maps[name];
 
-    health = 40;
-    cash = 55;
+    // Misc
+    resizeMax();
+    if ('cols' in m) cols = m.cols;
+    if ('rows' in m) rows = m.rows;
+    resizeCanvas(cols * ts, rows * ts, true);
+    maxWave = 'waves' in m ? m.waves : -1;
 
-    grid = template.grid;
-    palette = template.palette;
-    var dim = getDimensions(grid);
-    cols = dim.cols;
-    rows = dim.rows;
-    resizeTiles(cols, rows);
+    // Important tiles
+    exit = 'exit' in m ? m.exit : createVector(0, 0);
+    spawnpoints = 'spawnpoints' in m ? m.spawnpoints : [createVector(0, 0)];
+
+    // Grids
+    if ('grid' in m) {
+        grid = copyArray(m.grid);
+        // Display tiles
+        display = 'display' in m ? m.display : copyArray(grid);
+        palette = 'palette' in m ? m.palette : [
+            function() {
+                stroke(255, 31);
+                noFill();
+                rect(0, 0, ts, ts);
+            },
+            [1, 50, 67],
+            function() {
+                stroke(255, 31);
+                noFill();
+                rect(0, 0, ts, ts);
+            },
+            [1, 50, 67]
+        ];
+    } else {
+        randomMap();
+    }
+    if ('grid' in m && 'paths' in m) {
+        paths = copyArray(m.paths);
+    } else {
+        recalculate();
+    }
+}
+
+// Increment wave counter
+function nextWave() {
+    if (maxWave === -1 || wave < maxWave) {
+        createWave(getWave());
+        wave++;
+    }
 }
 /*function loadMap() {
     var name = document.getElementById('map').value;

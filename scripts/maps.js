@@ -16,28 +16,38 @@ maps.walls = toMap('N4IgJglgzgDgNgQwJ4gFwG10gO4LnEAGhzwON3yJMvNKorOsYfrtpqdY5feb
 maps.fork = toMap('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');
 */
 
-var maps = [
-    {
-        grid: [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 0],
-            [0, 1, 3, 2, 2, 2, 6, 1, 0],
-            [0, 1, 1, 1, 1, 1, 2, 1, 0],
-            [0, 1, 6, 2, 2, 2, 7, 1, 0],
-            [0, 1, 2, 1, 1, 1, 1, 1, 0],
-            [0, 1, 5, 2, 2, 2, 4, 1, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        ],
-        palette: [
-            tiles.null,
-            tiles.platform,
-            tiles.path,
-            tiles.start,
-            tiles.end,
-            tiles.pathRight,
-            tiles.pathDown,
-            tiles.pathLeft
-        ]
-    }
-];
+var maps = {};
+
+
+maps.random = {};
+
+maps.zigzag = {
+    // Grids
+    grid: [
+        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+        [3, 2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3],
+        [3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 3],
+        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    ],
+    // Important tiles
+    exit: createVector(17, 17),
+    spawnpoints: [createVector(1, 1)],
+    // Misc
+    cols: 19,
+    rows: 19
+};
