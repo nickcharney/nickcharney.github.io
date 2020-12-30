@@ -175,33 +175,7 @@ function empty(col, row) {
     return true;
 }
 
-// Return map string
-function exportMap() {
-    // Convert spawnpoints into a JSON-friendly format
-    var spawns = [];
-    for (var i = 0; i < spawnpoints.length; i++) {
-        var s = spawnpoints[i];
-        spawns.push([s.x, s.y]);
-    }
-    return LZString.compressToBase64(JSON.stringify({
-        // Grids
-        display: display,
-        displayDir: displayDir,
-        grid: grid,
-        metadata: metadata,
-        paths: paths,
-        // Important tiles
-        exit: [exit.x, exit.y],
-        spawnpoints: spawns,
-        // Colors
-        bg: bg,
-        border: border,
-        borderAlpha, borderAlpha,
-        // Misc
-        cols: cols,
-        rows: rows
-    }));
-}
+
 
 // Get an empty tile
 function getEmpty() {
@@ -258,14 +232,7 @@ function getWalkMap() {
     return walkMap;
 }
 
-// Load a map from a map string
-function importMap(str) {
-    try {
-        custom = JSON.parse(LZString.decompressFromBase64(str));
-        document.getElementById('custom').selected = true;
-        resetGame();
-    } catch (err) {}
-}
+
 
 // Check if wave is at least min and less than max
 function isWave(min, max) {
@@ -445,7 +412,7 @@ function placeable(col, row) {
     return true;
 }
 
-// Generate random map
+/*// Generate random map
 function randomMap(numSpawns) {
     // Generate empty tiles and walls
     grid = [];
@@ -478,7 +445,7 @@ function randomMap(numSpawns) {
         }
         spawnpoints.push(s);
     }
-}
+}*/
 
 // Random grid coordinate
 function randomTile() {
@@ -1034,59 +1001,7 @@ function keyPressed() {
             // Space
             pause();
             break;
-        case 49:
-            // 1
-            setPlace('gun');
-            break;
-        case 50:
-            // 2
-            setPlace('laser');
-            break;
-        case 51:
-            // 3
-            setPlace('slow');
-            break;
-        case 52:
-            // 4
-            setPlace('sniper');
-            break;
-        case 53:
-            // 5
-            setPlace('rocket');
-            break;
-        case 54:
-            // 6
-            setPlace('bomb');
-            break;
-        case 55:
-            // 7
-            setPlace('tesla');
-            break;
-        case 70:
-            // F
-            showFPS = !showFPS;
-            break;
-        case 71:
-            // G
-            godMode = !godMode;
-            break;
-        case 72:
-            // H
-            healthBar = !healthBar;
-            break;
-        case 77:
-            // M
-            importMap(prompt('Input map string:'));
-            break;
-        case 80:
-            // P
-            showEffects = !showEffects;
-            if (!showEffects) systems = [];
-            break;
-        case 81:
-            // Q
-            stopFiring = !stopFiring;
-            break;
+
         case 82:
             // R
             resetGame();
