@@ -43,6 +43,16 @@
             <button id="pause" onclick="pause()">Start</button>
             <button onclick="resetGame()">Restart</button>
           </div>
+          </p>
+          <p>
+            Mode:
+            <select id="difficulty">
+              <option value="0">Easy</option>
+              <option value="1" selected>Normal</option>
+              <option value="2">Hard</option>
+              <option value="3">Insane</option>
+            </select>
+          </p>
           <p>
             Map:
             <select id="map">
@@ -56,11 +66,15 @@
             <h3 id="name"></h3>
             <p id="cost"></p>
             <p id="sellPrice"></p>
+            <p id="upPrice"></p>
             <p id="damage"></p>
             <p id="type"></p>
             <p id="range"></p>
             <p id="cooldown"></p>
-            <p><button onclick="if (selected) sell(selected)">Sell</button></p>
+            <div class="horiz-buttons" id="info-buttons">
+              <button id="sell" onclick="if (selected) sell(selected)">Sell</button>
+              <button id="upgrade" onclick="if (selected && selected.upgrades.length > 0) upgrade(selected.upgrades[0])">Upgrade</button>
+            </div>
           </div>
         </aside>
       </div>
