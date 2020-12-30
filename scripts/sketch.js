@@ -445,40 +445,7 @@ function placeable(col, row) {
     return true;
 }
 
-// Generate random map
-function randomMap(numSpawns) {
-    // Generate empty tiles and walls
-    grid = [];
-    for (var x = 0; x < cols; x++) {
-        grid[x] = [];
-        for (var y = 0; y < rows; y++) {
-            grid[x][y] = random() < wallCover ? 1 : 0;
-        }
-    }
-    walkMap = getWalkMap();
 
-    // Generate exit and remove walls that are adjacent
-    exit = getEmpty();
-    var adj = neighbors(walkMap, exit.x, exit.y, false);
-    for (var i = 0; i < adj.length; i++) {
-        var n = stv(adj[i]);
-        grid[n.x][n.y] = 0;
-    }
-
-    // Generate enemy spawnpoints and ensure exit is possible
-    spawnpoints = [];
-    visitMap = getVisitMap(walkMap);
-    for (var i = 0; i < numSpawns; i++) {
-        var s;
-        // Try to place spawnpoint
-        for (var j = 0; j < 100; j++) {
-            s = getEmpty();
-            while (!visitMap[vts(s)]) s = getEmpty();
-            if (s.dist(exit) >= minDist) break;
-        }
-        spawnpoints.push(s);
-    }
-}
 
 // Random grid coordinate
 function randomTile() {
