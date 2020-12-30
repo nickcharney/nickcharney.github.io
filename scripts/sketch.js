@@ -959,30 +959,7 @@ function draw() {
         }
     }
 
-    // Update FPS meter
-    if (showFPS) calcFPS();
 
-    // Show if god mode active
-    if (godMode) {
-        // Draw black rect under text
-        noStroke();
-        fill(0);
-        rect(0, 0, 102, 22);
-
-        fill(255);
-        text('God Mode Active', 5, 15);
-    }
-
-    // Show if towers are disabled
-    if (stopFiring) {
-        // Draw black rect under text
-        noStroke();
-        fill(0);
-        rect(width - 60, 0, 60, 22);
-        
-        fill(255);
-        text('Firing off', width - 55, 15);
-    }
 
     removeTempSpawns();
 
