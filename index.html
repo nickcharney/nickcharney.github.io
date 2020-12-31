@@ -26,14 +26,18 @@
     </header>
 
     <main>
+      <div id="left-asides">
       <aside id="store">
         <h2>Store</h2>
-        <p><button class="gun" onclick="setPlace('gun')">Gun Tower (1)</button></p>
-        <p><button class="laser" onclick="setPlace('laser')">Laser Tower (2)</button></p>
-        <p><button class="slow" onclick="setPlace('slow')">Slow Tower (3)</button></p>
-        <p><button class="sniper" onclick="setPlace('sniper')">Sniper Tower (4)</button></p>
-        <p><button class="bomb" onclick="setPlace('bomb')">Bomb Tower (5)</button></p>
-        <p><button class="poison" onclick="setPlace('poison')">Poison Tower (6)</button></p>
+        <div class="group">
+          <p><button class="gun" onclick="setPlace('gun')">Gun Tower (1)</button></p>
+          <p><button class="laser" onclick="setPlace('laser')">Laser Tower (2)</button></p>
+          <p><button class="slow" onclick="setPlace('slow')">Slow Tower (3)</button></p>
+          <p><button class="sniper" onclick="setPlace('sniper')">Sniper Tower (4)</button></p>
+          <p><button class="rocket" onclick="setPlace('rocket')">Rocket Tower (5)</button></p>
+          <p><button class="bomb" onclick="setPlace('bomb')">Bomb Tower (6)</button></p>
+          <p><button class="tesla" onclick="setPlace('tesla')">Tesla Coil (7)</button></p>
+        </div>
       </aside>
 
       <div id="sketch-holder"></div>
@@ -47,20 +51,11 @@
             <button id="pause" onclick="pause()">Start</button>
             <button onclick="resetGame()">Restart</button>
           </div>
-          </p>
-          <p>
-            Mode:
-            <select id="difficulty">
-              <option value="0">Easy</option>
-              <option value="1" selected>Normal</option>
-              <option value="2">Hard</option>
-              <option value="3">Insane</option>
-            </select>
-          </p>
           <p>
             Map:
             <select id="map">
               <option value="zigzag">Zigzag</option>
+              <option value="spiral">Spiral</option>
             </select>
           </p>
         </aside>
@@ -83,9 +78,7 @@
         </aside>
       </div>
     </main>
-
     <footer>
-      <p id="copyright">&copy; 2017, xithiox</p>
     </footer>
   </body>
 </html>
