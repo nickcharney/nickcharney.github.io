@@ -9,7 +9,7 @@ var cols;
 var rows;
 var tileZoom = 2;
 var ts = 24;            // tile size
-
+//
 var display;            // display tiles
 var dists;              // distance to exit
 var grid;               // tile type (0 = empty, 1 = wall, 2 = path, 3 = tower)
