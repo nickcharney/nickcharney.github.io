@@ -1,6 +1,5 @@
 var enemies = [];
 var projectiles = [];
-var systems = [];
 var towers = [];
 var newEnemies = [];
 var newProjectiles = [];
@@ -10,130 +9,118 @@ var cols;
 var rows;
 var tileZoom = 2;
 var ts = 24;            // tile size
-var zoomDefault = ts;
 
-var particleAmt = 32;   // number of particles to draw per explosion
-
-var tempSpawnCount = 40;
-
-var custom;             // custom map JSON
-var display;            // graphical display tiles
-var displayDir;         // direction display tiles are facing
-                        // (0 = none, 1 = left, 2 = up, 3 = right, 4 = down)
+var display;            // display tiles
 var dists;              // distance to exit
-var grid;               // tile type
-                        // (0 = empty, 1 = wall, 2 = path, 3 = tower,
-                        //  4 = enemy-only pathing)
-var metadata;           // tile metadata
+var grid;               // tile type (0 = empty, 1 = wall, 2 = path, 3 = tower)
+var palette;            // what to display for each display tile
 var paths;              // direction to reach exit
 var visitMap;           // whether exit can be reached
 var walkMap;            // walkability map
 
 var exit;
 var spawnpoints = [];
-var tempSpawns = [];
 
 var cash;
 var health;
 var maxHealth;
 var wave;
+var maxWave;            // -1 for infinite waves
 
 var spawnCool;          // number of ticks between spawning enemies
-
-var bg;                 // background color
-var border;             // color to draw on tile borders
-var borderAlpha;        // alpha of tile borders
 
 var selected;
 var towerType;
 
-var sounds;             // dict of all sounds
-var boomSound;          // explosion sound effect
-
 // TODO add more functionality to god mode
 var godMode = false;    // make player immortal for test purposes
-var healthBar = true;   // display enemy health bar
-var muteSounds = false; // whether to mute sounds
 var paused;             // whether to update or not
-var randomWaves = true; // whether to do random or custom waves
-var scd;                // number of ticks until next spawn cycle
-var showEffects = true; // whether or not to display particle effects
-var showFPS = false;    // whether or not to display FPS
-var skipToNext = false; // whether or not to immediately start next wave
-var stopFiring = false; // whether or not to pause towers firing
+var scd;                // number of ticks to next spawn cycle
 var toCooldown;         // flag to reset spawning cooldown
 var toPathfind;         // flag to update enemy pathfinding
 var toPlace;            // flag to place a tower
-var toWait;             // flag to wait before next wave
-var wcd;                // number of ticks until next wave
-
-var avgFPS = 0;         // current average of all FPS values
-var numFPS = 0;         // number of FPS values calculated so far
 
 var minDist = 15;       // minimum distance between spawnpoint and exit
-var resistance = 0.5;   // percentage of damage blocked by resistance
+var resistance = 0.3;   // percentage of damage blocked by resistance
 var sellConst = 0.8;    // ratio of tower cost to sell price
 var wallCover = 0.1;    // percentage of map covered by walls
-var waveCool = 120;     // number of ticks between waves
-var weakness = 0.5;     // damage increase from weakness
+
+var presetCools = [
+    40,
+    20,
+    20,
+    40,
+    20,
+    10,
+    10,
+    20,
+    10,
+    10
+];
+var presetWaves = [
+    [['weak', 50]],
+    [['weak', 25]],
+    [
+        ['weak', 15],
+        ['strong', 10]
+    ],
+    [['fast', 25]],
+    [
+        ['strong', 50],
+        ['fast', 25]
+    ],
+    [
+        ['strong', 100],
+        ['fast', 50]
+    ],
+    [
+        ['strong', 100],
+        ['fast', 50]
+    ],
+    [
+        ['taunt', 'strong', 'strong', 'strong', 'strong', 10]
+    ],
+    [
+        ['strong', 100],
+        ['fast', 50]
+    ],
+    [
+        ['strong', 100],
+        ['fast', 50],
+        ['taunt', 'strong', 'strong', 50]
+    ]
+];
 
 
 // Misc functions
 
 // Spawn a group of enemies, alternating if multiple types
-function addGroup(group) {
-    var count = group.pop();
+function addEnemies(enemies, count) {
+    if (!Array.isArray(enemies)) enemies = [enemies];
     for (var i = 0; i < count; i++) {
-        for (var j = 0; j < group.length; j++) {
-            newEnemies.push(group[j]);
+        for (var j = 0; j < enemies.length; j++) {
+            newEnemies.push(enemies[j]);
         }
-    }
-}
-
-// Prepare a wave
-function addWave(pattern) {
-    spawnCool = pattern.shift();
-    for (var i = 0; i < pattern.length; i++) {
-        addGroup(pattern[i]);
     }
 }
 
 // Buy and place a tower if player has enough money
 function buy(t) {
     if (godMode || cash >= t.cost) {
-        if (!godMode) {
-            cash -= t.cost;
-            toPlace = false;
-        }
+        if (!godMode) cash -= t.cost;
         selected = t;
+        toPlace = false;
         if (grid[t.gridPos.x][t.gridPos.y] === 0) toPathfind = true;
         updateInfo(t);
         newTowers.push(t);
     }
 }
 
-// Calculate and display current and average FPS
-function calcFPS() {
-    var fps = frameRate();
-    avgFPS += (fps - avgFPS) / ++numFPS;
-
-    // Draw black rect under text
-    noStroke();
-    fill(0);
-    rect(0, height - 40, 70, 40);
-
-    // Update FPS meter
-    fill(255);
-    var fpsText = 'FPS: ' + fps.toFixed(2) + '\nAvg: ' + avgFPS.toFixed(2);
-    text(fpsText, 5, height - 25);
-}
-
 // Check if all conditions for placing a tower are true
 function canPlace(col, row) {
     if (!toPlace) return false;
-    var g = grid[col][row];
-    if (g === 3) return true;
-    if (g === 1 || g === 2 || g === 4) return false;
+    if (grid[col][row] === 3) return true;
+    if (grid[col][row] === 1 || grid[col][row] === 2) return false;
     if (!empty(col, row) || !placeable(col, row)) return false;
     return true;
 }
@@ -148,12 +135,34 @@ function clearInfo() {
     document.getElementById('info-div').style.display = 'none';
 }
 
-// TODO implement
-function customWave() {}
+// Add enemies to spawn
+function createWave(pattern) {
+    if (typeof pattern === 'undefined') pattern = [];
+    for (var i = 0; i < pattern.length; i++) {
+        var group = pattern[i];
+        var count = group.pop();
+        addEnemies(group, count);
+    }
+}
 
 // Check if all conditions for showing a range are true
 function doRange() {
     return mouseInMap() && toPlace && typeof towerType !== 'undefined';
+}
+
+// Draw a display tile
+function drawTile(col, row) {
+    push();
+    translate(col * ts, row * ts);
+    var g = palette[display[col][row]];
+    if (typeof g === 'function') {
+        g();
+    } else {
+        stroke(255, 31);
+        fill(g);
+        rect(0, 0, ts, ts);
+    }
+    pop();
 }
 
 // Check if tile is empty
@@ -183,24 +192,18 @@ function exportMap() {
         var s = spawnpoints[i];
         spawns.push([s.x, s.y]);
     }
-    return LZString.compressToBase64(JSON.stringify({
+    return JSON.stringify({
         // Grids
-        display: display,
-        displayDir: displayDir,
         grid: grid,
-        metadata: metadata,
         paths: paths,
         // Important tiles
         exit: [exit.x, exit.y],
         spawnpoints: spawns,
-        // Colors
-        bg: bg,
-        border: border,
-        borderAlpha, borderAlpha,
         // Misc
         cols: cols,
-        rows: rows
-    }));
+        rows: rows,
+        waves: waves
+    });
 }
 
 // Get an empty tile
@@ -258,160 +261,91 @@ function getWalkMap() {
     return walkMap;
 }
 
-// Load a map from a map string
-function importMap(str) {
-    try {
-        custom = JSON.parse(LZString.decompressFromBase64(str));
-        document.getElementById('custom').selected = true;
-        resetGame();
-    } catch (err) {}
-}
-
-// Check if wave is at least min and less than max
-function isWave(min, max) {
-    if (typeof max === 'undefined') return wave >= min;
-    return wave >= min && wave < max;
-}
-
-// Load map from template
-// Always have an exit and spawnpoints if you do not have a premade grid
-// TODO health and money by map
-function loadMap() {
-    var name = document.getElementById('map').value;
-
-    health = 40;
-    cash = 55;
-    
-    if (name === 'custom' && custom) {
-        // Grids
-        display = copyArray(custom.display);
-        displayDir = copyArray(custom.displayDir);
-        grid = copyArray(custom.grid);
-        metadata = copyArray(custom.metadata);
-        paths = copyArray(custom.paths);
-        // Important tiles
-        exit = createVector(custom.exit[0], custom.exit[1]);
-        spawnpoints = [];
-        for (var i = 0; i < custom.spawnpoints.length; i++) {
-            var s = custom.spawnpoints[i];
-            spawnpoints.push(createVector(s[0], s[1]));
-        }
-        // Colors
-        bg = custom.bg;
-        border = custom.border;
-        borderAlpha = custom.borderAlpha;
-        // Misc
-        cols = custom.cols;
-        rows = custom.rows;
-
-        resizeFit();
-    } else if (name in maps) {
-        var m = maps[name];
-
-        // Grids
-        display = copyArray(m.display);
-        displayDir = copyArray(m.displayDir);
-        grid = copyArray(m.grid);
-        metadata = copyArray(m.metadata);
-        paths = copyArray(m.paths);
-        // Important tiles
-        exit = createVector(m.exit[0], m.exit[1]);
-        spawnpoints = [];
-        for (var i = 0; i < m.spawnpoints.length; i++) {
-            var s = m.spawnpoints[i];
-            spawnpoints.push(createVector(s[0], s[1]));
-        }
-        // Colors
-        bg = m.bg;
-        border = m.border;
-        borderAlpha = m.borderAlpha;
-        // Misc
-        cols = m.cols;
-        rows = m.rows;
-
-        resizeFit();
+// Set spawn cooldown and generate enemies
+// TODO better random wave generation
+// TODO fix wave bug (only first branch of if statement causes it)
+function getWave() {
+    if (wave < presetWaves.length) {
+        spawnCool = presetCools[wave];
+        return presetWaves[wave];
     } else {
-        resizeMax();
-        var numSpawns;
-        wallCover = 0.1;
-        if (name[name.length - 1] === '3') {
-            cash = 65;
-            numSpawns = 3;
-        } else {
-            numSpawns = 2;
-        }
-        if (name === 'empty2' || name === 'empty3') {
-            wallCover = 0;
-        }
-        if (name === 'sparse2' || name === 'sparse3') {
-            wallCover = 0.1;
-        }
-        if (name === 'dense2' || name === 'dense3') {
-            wallCover = 0.2;
-        }
-        if (name === 'solid2' || name === 'solid3') {
-            wallCover = 0.3;
-        }
-        randomMap(numSpawns);
-        display = replaceArray(
-            grid, [0, 1, 2, 3, 4], ['empty', 'wall', 'empty', 'tower', 'empty']
-        );
-        displayDir = buildArray(cols, rows, 0);
-        // Colors
-        bg = [0, 0, 0];
-        border = 255;
-        borderAlpha = 31;
-        // Misc
-        metadata = buildArray(cols, rows, null);
+        spawnCool = randint(5, 21);
+        return random([
+            [
+                ['strong', 100],
+                ['fast', 50]
+            ],
+            [
+                ['strong', 100]
+            ],
+            [
+                ['fast', 100]
+            ],
+            [
+                ['taunt', 'strong', 'strong', 'strong', 'strong', 100],
+                ['fast', 50]
+            ],
+            [
+                ['taunt', 'strong', 'strong', 100],
+                ['fast', 25],
+                ['taunt', 'strong', 'strong', 100],
+                ['fast', 50]
+            ]
+        ]);
     }
-
-    tempSpawns = [];
-
-    recalculate();
 }
 
-// Load all sounds
-function loadSounds() {
-    sounds = {};
-    
-    // Missile explosion
-    sounds.boom = loadSound('sounds/boom.wav');
-    sounds.boom.setVolume(0.3);
+// Load map from template, fill in missing sections
+// Always have an exit and spawnpoints if you do not have a premade grid
+function loadMap(name) {
+    var m = maps[name];
 
-    // Missile launch
-    sounds.missile = loadSound('sounds/missile.wav');
-    sounds.missile.setVolume(0.3);
+    // Misc
+    resizeMax();
+    if ('cols' in m) cols = m.cols;
+    if ('rows' in m) rows = m.rows;
+    resizeCanvas(cols * ts, rows * ts, true);
+    maxWave = 'waves' in m ? m.waves : -1;
 
-    // Enemy death
-    sounds.pop = loadSound('sounds/pop.wav');
-    sounds.pop.setVolume(0.4);
+    // Important tiles
+    exit = 'exit' in m ? m.exit : createVector(0, 0);
+    spawnpoints = 'spawnpoints' in m ? m.spawnpoints : [createVector(0, 0)];
 
-    // Railgun
-    sounds.railgun = loadSound('sounds/railgun.wav');
-    sounds.railgun.setVolume(0.3);
-
-    // Sniper rifle shot
-    sounds.sniper = loadSound('sounds/sniper.wav');
-    sounds.sniper.setVolume(0.2);
-
-    // Tesla coil
-    sounds.spark = loadSound('sounds/spark.wav');
-    sounds.spark.setVolume(0.3);
-
-    // Taunt enemy death
-    sounds.taunt = loadSound('sounds/taunt.wav');
-    sounds.taunt.setVolume(0.3);
+    // Grids
+    if ('grid' in m) {
+        grid = copyArray(m.grid);
+        // Display tiles
+        display = 'display' in m ? m.display : copyArray(grid);
+        palette = 'palette' in m ? m.palette : [
+            function() {
+                stroke(255, 31);
+                noFill();
+                rect(0, 0, ts, ts);
+            },
+            [1, 50, 67],
+            function() {
+                stroke(255, 31);
+                noFill();
+                rect(0, 0, ts, ts);
+            },
+            [1, 50, 67]
+        ];
+    } else {
+        randomMap();
+    }
+    if ('grid' in m && 'paths' in m) {
+        paths = copyArray(m.paths);
+    } else {
+        recalculate();
+    }
 }
 
-// Increment wave counter and prepare wave
+// Increment wave counter
 function nextWave() {
-    addWave(randomWaves ? randomWave() : customWave());
-    wave++;
-}
-
-// Check if no more enemies
-function noMoreEnemies() {
-    return enemies.length === 0 && newEnemies.length === 0;
+    if (maxWave === -1 || wave < maxWave) {
+        createWave(getWave());
+        wave++;
+    }
 }
 
 function outsideMap(e) {
@@ -437,16 +371,14 @@ function placeable(col, row) {
     // Check each enemy
     for (var i = 0; i < enemies.length; i++) {
         var e = enemies[i];
-        var p = gridPos(e.pos.x, e.pos.y);
-        if (p.equals(col, row)) continue;
-        if (!visitMap[vts(p)]) return false;
+        if (!visitMap[vts(gridPos(e.pos.x, e.pos.y))]) return false;
     }
 
     return true;
 }
 
 // Generate random map
-function randomMap(numSpawns) {
+function randomMap() {
     // Generate empty tiles and walls
     grid = [];
     for (var x = 0; x < cols; x++) {
@@ -456,6 +388,17 @@ function randomMap(numSpawns) {
         }
     }
     walkMap = getWalkMap();
+
+    // Copy to display grid
+    display = copyArray(grid);
+    palette = [
+        function() {
+            stroke(255, 31);
+            noFill();
+            rect(0, 0, ts, ts);
+        },
+        [1, 50, 67]
+    ];
 
     // Generate exit and remove walls that are adjacent
     exit = getEmpty();
@@ -468,6 +411,7 @@ function randomMap(numSpawns) {
     // Generate enemy spawnpoints and ensure exit is possible
     spawnpoints = [];
     visitMap = getVisitMap(walkMap);
+    var numSpawns = parseInt(document.getElementById('difficulty').value) + 1;
     for (var i = 0; i < numSpawns; i++) {
         var s;
         // Try to place spawnpoint
@@ -483,109 +427,6 @@ function randomMap(numSpawns) {
 // Random grid coordinate
 function randomTile() {
     return createVector(randint(cols), randint(rows));
-}
-
-// Generate a random wave
-function randomWave() {
-    var waves = [];
-
-    if (isWave(0, 3)) {
-        waves.push([40, ['weak', 50]]);
-    }
-    if (isWave(2, 4)) {
-        waves.push([20, ['weak', 25]]);
-    }
-    if (isWave(2, 7)) {
-        waves.push([30, ['weak', 25], ['strong', 25]]);
-        waves.push([20, ['strong', 25]]);
-    }
-    if (isWave(3, 7)) {
-        waves.push([40, ['fast', 25]]);
-    }
-    if (isWave(4, 14)) {
-        waves.push([20, ['fast', 50]]);
-    }
-    if (isWave(5, 6)) {
-        waves.push([20, ['strong', 50], ['fast', 25]]);
-    }
-    if (isWave(8, 12)) {
-        waves.push([20, ['medic', 'strong', 'strong', 25]]);
-    }
-    if (isWave(10, 13)) {
-        waves.push([20, ['medic', 'strong', 'strong', 50]]);
-        waves.push([30, ['medic', 'strong', 'strong', 50], ['fast', 50]]);
-        waves.push([5, ['fast', 50]]);
-    }
-    if (isWave(12, 16)) {
-        waves.push([20, ['medic', 'strong', 'strong', 50], ['strongFast', 50]]);
-        waves.push([10, ['strong', 50], ['strongFast', 50]]);
-        waves.push([10, ['medic', 'strongFast', 50]]);
-        waves.push([10, ['strong', 25], ['stronger', 25], ['strongFast', 50]]);
-        waves.push([10, ['strong', 25], ['medic', 25], ['strongFast', 50]]);
-        waves.push([20, ['medic', 'stronger', 'stronger', 50]]);
-        waves.push([10, ['medic', 'stronger', 'strong', 50]]);
-        waves.push([10, ['medic', 'strong', 50], ['medic', 'strongFast', 50]]);
-        waves.push([5, ['strongFast', 100]]);
-        waves.push([20, ['stronger', 50]]);
-    }
-    if (isWave(13, 20)) {
-        waves.push([40, ['tank', 'stronger', 'stronger', 'stronger', 10]]);
-        waves.push([10, ['medic', 'stronger', 'stronger', 50]]);
-        waves.push([40, ['tank', 25]]);
-        waves.push([20, ['tank', 'stronger', 'stronger', 50]]);
-        waves.push([20, ['tank', 'medic', 50], ['strongFast', 25]]);
-    }
-    if (isWave(14, 20)) {
-        waves.push([20, ['tank', 'stronger', 'stronger', 50]]);
-        waves.push([20, ['tank', 'medic', 'medic', 50]]);
-        waves.push([20, ['tank', 'medic', 50], ['strongFast', 25]]);
-        waves.push([10, ['tank', 50], ['strongFast', 25]]);
-        waves.push([10, ['faster', 50]]);
-        waves.push([20, ['tank', 50], ['faster', 25]]);
-    }
-    if (isWave(17, 25)) {
-        waves.push([20, ['taunt', 'stronger', 'stronger', 'stronger', 25]]);
-        waves.push([20, ['spawner', 'stronger', 'stronger', 'stronger', 25]]);
-        waves.push([20, ['taunt', 'tank', 'tank', 'tank', 25]]);
-        waves.push([40, ['taunt', 'tank', 'tank', 'tank', 25]]);
-    }
-    if (isWave(19)) {
-        waves.push([20, ['spawner', 1], ['tank', 20], ['stronger', 25]]);
-        waves.push([20, ['spawner', 1], ['faster', 25]]);
-    }
-    if (isWave(23)) {
-        waves.push([20, ['taunt', 'medic', 'tank', 25]]);
-        waves.push([20, ['spawner', 2], ['taunt', 'medic', 'tank', 25]]);
-        waves.push([10, ['spawner', 1], ['faster', 100]]);
-        waves.push([5, ['faster', 100]]);
-        waves.push([
-            20, ['tank', 100], ['faster', 50],
-            ['taunt', 'tank', 'tank', 'tank', 50]
-        ]);
-        waves.push([
-            10, ['taunt', 'stronger', 'tank', 'stronger', 50],
-            ['faster', 50]
-        ]);
-    }
-    if (isWave(25)) {
-        waves.push([5, ['taunt', 'medic', 'tank', 50], ['faster', 50]]);
-        waves.push([5, ['taunt', 'faster', 'faster', 'faster', 50]]);
-        waves.push([
-            10, ['taunt', 'tank', 'tank', 'tank', 50],
-            ['faster', 50]
-        ]);
-    }
-    if (isWave(30)) {
-        waves.push([5, ['taunt', 'faster', 'faster', 'faster', 50]]);
-        waves.push([5, ['taunt', 'tank', 'tank', 'tank', 50]]);
-        waves.push([5, ['taunt', 'medic', 'tank', 'tank', 50]]);
-        waves.push([1, ['faster', 200]]);
-    }
-    if (isWave(35)) {
-        waves.push([0, ['taunt', 'faster', 200]]);
-    }
-
-    return random(waves);
 }
 
 // Recalculate pathfinding maps
@@ -618,7 +459,7 @@ function recalculate() {
 
     // Generate usable maps
     dists = buildArray(cols, rows, null);
-    var newPaths = buildArray(cols, rows, 0);
+    paths = buildArray(cols, rows, null);
     var keys = Object.keys(cameFrom);
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
@@ -634,37 +475,40 @@ function recalculate() {
             var next = stv(val);
             var dir = next.sub(current);
             // Fill tile with direction
-            if (dir.x < 0) newPaths[current.x][current.y] = 1;
-            if (dir.y < 0) newPaths[current.x][current.y] = 2;
-            if (dir.x > 0) newPaths[current.x][current.y] = 3;
-            if (dir.y > 0) newPaths[current.x][current.y] = 4;
+            if (dir.x < 0) paths[current.x][current.y] = 'left';
+            if (dir.y < 0) paths[current.x][current.y] = 'up';
+            if (dir.x > 0) paths[current.x][current.y] = 'right';
+            if (dir.y > 0) paths[current.x][current.y] = 'down';
         }
     }
-
-    // Preserve old paths on path tiles
-    for (var x = 0; x < cols; x++) {
-        for (var y = 0; y < rows; y++) {
-            if (grid[x][y] === 2) newPaths[x][y] = paths[x][y];
-        }
-    }
-
-    paths = newPaths;
 }
 
-// TODO vary health based on map
+// Remove dead entities
+// TODO onDeath()
+function removeDead(entities) {
+    for (var i = entities.length - 1; i >= 0; i--) {
+        var e = entities[i];
+        if (e.alive) continue;
+        entities.splice(i, 1);
+    }
+}
+
+// TODO vary health based on difficulty
 function resetGame() {
-    loadMap();
+    loadMap(document.getElementById('map').value);
     // Clear all entities
     enemies = [];
     projectiles = [];
-    systems = [];
     towers = [];
     newEnemies = [];
     newProjectiles = [];
     newTowers = [];
+    // Get difficulty
+    var d = parseInt(document.getElementById('difficulty').value);
     // Reset all stats
-    health = 40;
+    health = [40, 40, 40, 40][d];
     maxHealth = health;
+    cash = [40, 55, 65, 65][d];
     wave = 0;
     // Reset all flags
     paused = true;
@@ -713,8 +557,7 @@ function setPlace(t) {
 function showRange(t, cx, cy) {
     stroke(255);
     fill(t.color[0], t.color[1], t.color[2], 63);
-    var r = (t.range + 0.5) * ts * 2;
-    ellipse(cx, cy, r, r);
+    ellipse(cx, cy, (t.range + 0.5) * ts * 2, (t.range + 0.5) * ts * 2);
 }
 
 // Display tower information
@@ -723,43 +566,22 @@ function updateInfo(t) {
     var name = document.getElementById('name');
     name.innerHTML = '<span style="color:rgb(' + t.color + ')">' + t.title +
     '</span>';
-    document.getElementById('cost').innerHTML = 'Cost: $' + t.totalCost;
+    document.getElementById('cost').innerHTML = 'Cost: $' + t.cost;
     document.getElementById('sellPrice').innerHTML = 'Sell price: $' +
     t.sellPrice();
-    document.getElementById('upPrice').innerHTML = 'Upgrade price: ' +
-    (t.upgrades.length > 0 ? '$' + t.upgrades[0].cost : 'N/A');
     document.getElementById('damage').innerHTML = 'Damage: ' + t.getDamage();
-    document.getElementById('type').innerHTML = 'Type: ' +
-    t.type.toUpperCase();
     document.getElementById('range').innerHTML = 'Range: ' + t.range;
     document.getElementById('cooldown').innerHTML = 'Avg. Cooldown: ' +
     t.getCooldown().toFixed(2) + 's';
-    var buttons = document.getElementById('info-buttons');
-    buttons.style.display = toPlace ? 'none' : 'flex';
     document.getElementById('info-div').style.display = 'block';
-}
-
-// Update pause button
-function updatePause() {
-    document.getElementById('pause').innerHTML = paused ? 'Start' : 'Pause';
 }
 
 // Update game status display with wave, health, and cash
 function updateStatus() {
-    document.getElementById('wave').innerHTML = 'Wave ' + wave;
-    document.getElementById('health').innerHTML = 'Health: ' +
-    health + '/' + maxHealth;
+    waveText = 'Wave ' + wave + (maxWave === -1 ? '' : '/' + maxWave);
+    document.getElementById('wave').innerHTML = waveText;
+    document.getElementById('health').innerHTML = health + '/' + maxHealth;
     document.getElementById('cash').innerHTML = '$' + cash;
-}
-
-// Upgrade tower
-function upgrade(t) {
-    if (godMode || cash >= t.cost) {
-        if (!godMode) cash -= t.cost;
-        selected.upgrade(t);
-        selected.upgrades = t.upgrades ? t.upgrades : [];
-        updateInfo(selected);
-    }
 }
 
 // Return whether tile is walkable
@@ -774,10 +596,6 @@ function walkable(col, row) {
 
 // Main p5 functions
 
-function preload() {
-    loadSounds();
-}
-
 function setup() {
     var div = document.getElementById('sketch-holder');
     var canvas = createCanvas(div.offsetWidth, div.offsetHeight);
@@ -785,31 +603,22 @@ function setup() {
     resetGame();
 }
 
+// TODO change color of tower-only tiles (maybe to grey?)
+// TODO indicate whether tower can be placed while hovering
 // TODO show range of selected tower
 function draw() {
-    background(bg);
+    background(0);
 
-    // Update game status
-    updatePause();
+    // Update game status display
     updateStatus();
 
-    // Update spawn and wave cooldown
-    if (!paused) {
-        if (scd > 0) scd--;
-        if (wcd > 0 && toWait) wcd--;
-    }
+    // Update spawn cooldown
+    if (!paused && scd > 0) scd--;
 
     // Draw basic tiles
     for (var x = 0; x < cols; x++) {
         for (var y = 0; y < rows; y++) {
-            var t = tiles[display[x][y]];
-            if (typeof t === 'function') {
-                t(x, y, displayDir[x][y]);
-            } else {
-                stroke(border, borderAlpha);
-                t ? fill(t) : noFill();
-                rect(x * ts, y * ts, ts, ts);
-            }
+            drawTile(x, y);
         }
     }
 
@@ -826,14 +635,6 @@ function draw() {
     fill(207, 0, 15);
     rect(exit.x * ts, exit.y * ts, ts, ts);
 
-    // Draw temporary spawnpoints
-    for (var i = 0; i < tempSpawns.length; i++) {
-        stroke(255);
-        fill(155, 32, 141);
-        var s = tempSpawns[i][0];
-        rect(s.x * ts, s.y * ts, ts, ts);
-    }
-
     // Spawn enemies
     if (canSpawn() && !paused) {
         // Spawn same enemy for each spawnpoint
@@ -843,29 +644,18 @@ function draw() {
             var c = center(s.x, s.y);
             enemies.push(createEnemy(c.x, c.y, enemy[name]));
         }
-
-        // Temporary spawnpoints
-        for (var i = 0; i < tempSpawns.length; i++) {
-            var s = tempSpawns[i];
-            if (s[1] === 0) continue;
-            s[1]--;
-            var c = center(s[0].x, s[0].y);
-            enemies.push(createEnemy(c.x, c.y, enemy[name]));
-        }
-
         // Reset cooldown
         toCooldown = true;
     }
 
     // Update and draw enemies
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        let e = enemies[i];
-
+    for (var i = 0; i < enemies.length; i++) {
+        var e = enemies[i];
+        
         // Update direction and position
         if (!paused) {
             e.steer();
             e.update();
-            e.onTick();
         }
 
         // Kill if outside map
@@ -876,24 +666,15 @@ function draw() {
 
         // Draw
         e.draw();
-
-        if (e.isDead()) enemies.splice(i, 1);
-    }
-
-    // Draw health bars
-    if (healthBar) {
-        for (var i = 0; i < enemies.length; i++) {
-            enemies[i].drawHealth();
-        }
     }
 
     // Update and draw towers
-    for (let i = towers.length - 1; i >= 0; i--) {
-        let t = towers[i];
+    for (var i = 0; i < towers.length; i++) {
+        var t = towers[i];
 
         // Target enemies and update cooldowns
         if (!paused) {
-            t.target(enemies);
+            t.onTarget(enemies);
             t.update();
         }
 
@@ -902,89 +683,34 @@ function draw() {
 
         // Draw
         t.draw();
-
-        if (t.isDead()) towers.splice(i, 1);
-    }
-
-    // Update and draw particle systems
-    for (let i = systems.length - 1; i >= 0; i--) {
-        let ps = systems[i];
-        ps.run();
-        if (ps.isDead()) systems.splice(i, 1);
-    }
-
-    // Update and draw projectiles
-    for (let i = projectiles.length - 1; i >= 0; i--) {
-        let p = projectiles[i];
-
-        if (!paused) {
-            p.steer();
-            p.update();
-        }
-
-        // Attack target
-        if (p.reachedTarget()) p.explode()
-
-        // Kill if outside map
-        if (outsideMap(p)) p.kill();
-
-        p.draw();
-
-        if (p.isDead()) projectiles.splice(i, 1);
     }
 
     // Draw range of tower being placed
+    // TODO indicate whether tower can be placed or not
     if (doRange()) {
         var p = gridPos(mouseX, mouseY);
         var c = center(p.x, p.y);
         var t = createTower(0, 0, tower[towerType]);
         showRange(t, c.x, c.y);
 
-        // Draw a red X if tower cannot be placed
-        if (!canPlace(p.x, p.y)) {
-            push();
-            translate(c.x, c.y);
-            rotate(PI / 4);
-
+        // Indicate whether tower can be placed
+        push();
+        translate(c.x, c.y);
+        rotate(PI / 4);
+        stroke(255);
+        if (canPlace(p.x, p.y)) {
+            // Draw a green check mark
+            fill(0, 230, 64);
+        } else {
             // Draw a red X
-            noStroke();
             fill(207, 0, 15);
-            var edge = 0.1 * ts;
-            var len = 0.9 * ts / 2;
-            rect(-edge, len, edge * 2, -len * 2);
-            rotate(PI / 2);
-            rect(-edge, len, edge * 2, -len * 2);
-
-            pop();
         }
+        pop();
     }
 
-    // Update FPS meter
-    if (showFPS) calcFPS();
-
-    // Show if god mode active
-    if (godMode) {
-        // Draw black rect under text
-        noStroke();
-        fill(0);
-        rect(0, 0, 102, 22);
-
-        fill(255);
-        text('God Mode Active', 5, 15);
-    }
-
-    // Show if towers are disabled
-    if (stopFiring) {
-        // Draw black rect under text
-        noStroke();
-        fill(0);
-        rect(width - 60, 0, 60, 22);
-        
-        fill(255);
-        text('Firing off', width - 55, 15);
-    }
-
-    removeTempSpawns();
+    removeDead(enemies);
+    removeDead(projectiles);
+    removeDead(towers);
 
     projectiles = projectiles.concat(newProjectiles);
     towers = towers.concat(newTowers);
@@ -995,16 +721,9 @@ function draw() {
     if (health <= 0) resetGame();
 
     // Start next wave
-    if (toWait && wcd === 0 || skipToNext && newEnemies.length === 0) {
-        toWait = false;
-        wcd = 0;
+    if (enemies.length === 0 && newEnemies.length === 0) {
+        paused = true;
         nextWave();
-    }
-
-    // Wait for next wave
-    if (noMoreEnemies() && !toWait) {
-        wcd = waveCool;
-        toWait = true;
     }
 
     // Reset spawn cooldown
@@ -1025,6 +744,10 @@ function draw() {
 
 function keyPressed() {
     switch (keyCode) {
+        case 17:
+            // Ctrl
+            godMode = !godMode;
+            break;
         case 27:
             // Esc
             toPlace = false;
@@ -1052,40 +775,11 @@ function keyPressed() {
             break;
         case 53:
             // 5
-            setPlace('rocket');
+            setPlace('bomb');
             break;
         case 54:
             // 6
-            setPlace('bomb');
-            break;
-        case 55:
-            // 7
-            setPlace('tesla');
-            break;
-        case 70:
-            // F
-            showFPS = !showFPS;
-            break;
-        case 71:
-            // G
-            godMode = !godMode;
-            break;
-        case 72:
-            // H
-            healthBar = !healthBar;
-            break;
-        case 77:
-            // M
-            importMap(prompt('Input map string:'));
-            break;
-        case 80:
-            // P
-            showEffects = !showEffects;
-            if (!showEffects) systems = [];
-            break;
-        case 81:
-            // Q
-            stopFiring = !stopFiring;
+            setPlace('poison');
             break;
         case 82:
             // R
@@ -1094,30 +788,6 @@ function keyPressed() {
         case 83:
             // S
             if (selected) sell(selected);
-            break;
-        case 85:
-            // U
-            if (selected && selected.upgrades.length > 0) {
-                upgrade(selected.upgrades[0]);
-            }
-            break;
-        case 86:
-            // V
-            muteSounds = !muteSounds;
-            break;
-        case 87:
-            // W
-            skipToNext = !skipToNext;
-            break;
-        case 88:
-            // X
-            copyToClipboard(exportMap());
-            break;
-        case 90:
-            // Z
-            ts = zoomDefault;
-            resizeMax();
-            resetGame();
             break;
         case 219:
             // Left bracket
@@ -1152,8 +822,3 @@ function mousePressed() {
         buy(createTower(p.x, p.y, tower[towerType]));
     }
 }
-
-
-// Events
-
-document.getElementById('map').addEventListener('change', resetGame);
