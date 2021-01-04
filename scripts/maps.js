@@ -1,5 +1,8 @@
 var maps = {};
 
+
+maps.random = {};
+
 maps.zigzag = {
     // Grids
     grid: [
